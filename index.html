@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#243E6B" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="YB영수증" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <title>YB-Receipt</title>
+</head>
+<body class="signed-out">
+  <div id="app" class="app" data-view="list">
+    <!-- 1열: 영수증 목록 -->
+    <section class="pane pane-list" aria-label="영수증 목록">
+      <header class="pane-head">
+        <span class="brand"><img class="brand-icon" src="icons/icon.svg" alt="" width="26" height="26" />YB-Receipt</span>
+        <span class="grow"></span>
+        <button class="btn-primary" id="btn-add" title="영수증 추가 (PC: 사진 붙여넣기·끌어놓기도 가능)">＋ 영수증</button>
+        <button class="icon-btn" id="btn-menu" title="메뉴" aria-label="메뉴">⋯</button>
+      </header>
+
+      <div class="filters">
+        <select id="sel-month" class="sel" title="기간"></select>
+        <input id="search" class="search" type="search" placeholder="가맹점·메모 검색" />
+      </div>
+      <div class="chips" id="chips" role="tablist" aria-label="정산 상태"></div>
+      <table class="summary" id="summary" aria-label="합계"></table>
+
+      <div class="selbar" id="selbar" hidden>
+        <label class="chk"><input type="checkbox" id="chk-all" /><span id="sel-count">0건 선택</span></label>
+        <span class="grow"></span>
+        <select id="sel-bulk" class="sel sel-sm" title="선택한 영수증의 정산 상태 바꾸기">
+          <option value="">상태 변경…</option>
+          <option value="todo">→ 미제출</option>
+          <option value="submitted">→ 제출</option>
+          <option value="done">→ 정산완료</option>
+        </select>
+        <button class="btn-ghost" id="btn-sel-clear">선택 해제</button>
+      </div>
+
+      <ul id="list" class="list"></ul>
+
+      <footer class="pane-foot">
+        <span id="sync" class="sync" data-s="pending">● 연결 중…</span>
+        <span id="account" class="account"></span>
+        <span id="version" class="version"></span>
+      </footer>
+    </section>
+
+    <!-- 2열: 상세 -->
+    <main class="pane pane-detail" aria-label="영수증 상세">
+      <header class="pane-head">
+        <button class="icon-btn only-narrow" data-go="list" aria-label="목록으로">‹</button>
+        <h1 id="detail-title">영수증</h1>
+        <span id="save-state" class="save-state"></span>
+        <button class="icon-btn" id="btn-rotate" title="사진 오른쪽으로 90° 돌리기" disabled>↻</button>
+        <button class="icon-btn" id="btn-reocr" title="글자 다시 인식 (일자·가맹점·금액을 새로 채움)" disabled>🔍</button>
+        <button class="icon-btn" id="btn-photo" title="사진 넣기·바꾸기" disabled>📷</button>
+        <button class="icon-btn" id="btn-delete" title="영수증 삭제" disabled>🗑</button>
+      </header>
+      <div class="detail-wrap">
+        <div id="detail" class="detail" hidden>
+          <div class="photo" id="photo">
+            <img id="photo-img" alt="영수증 사진" hidden />
+            <div class="photo-empty" id="photo-empty">
+              <p>사진이 없습니다</p>
+              <button class="btn-ghost" id="btn-photo2">📷 사진 넣기</button>
+            </div>
+            <div class="ocr-overlay" id="ocr-overlay" hidden>
+              <div class="spinner"></div>
+              <p id="ocr-msg">글자 인식 중…</p>
+              <div class="bar"><i id="ocr-bar"></i></div>
+            </div>
+          </div>
+
+          <form class="fields" id="fields" autocomplete="off" onsubmit="return false">
+            <label class="field"><span>일자</span><input type="date" id="f-date" /></label>
+            <label class="field"><span>가맹점</span><input type="text" id="f-merchant" placeholder="상호" maxlength="60" /></label>
+            <label class="field"><span>금액</span><span class="amount-in"><input type="text" id="f-amount" inputmode="numeric" placeholder="0" /><em>원</em></span></label>
+            <div class="field"><span>정산 상태</span>
+              <div class="seg" id="f-status" role="radiogroup">
+                <button type="button" data-v="todo" role="radio">미제출</button>
+                <button type="button" data-v="submitted" role="radio">제출</button>
+                <button type="button" data-v="done" role="radio">정산완료</button>
+              </div>
+            </div>
+            <label class="field field-memo"><span>메모</span><textarea id="f-memo" rows="3" placeholder="용도, 참석자, 사업명 등"></textarea></label>
+            <p class="meta" id="f-meta"></p>
+          </form>
+
+          <details class="ocr-raw" id="ocr-raw">
+            <summary>인식된 글자 보기</summary>
+            <pre id="ocr-text"></pre>
+          </details>
+        </div>
+        <div id="empty-detail" class="placeholder">
+          <img src="icons/icon.svg" alt="" width="64" height="64" />
+          <p class="ph-title">영수증을 선택하거나 추가하세요</p>
+          <p><b>＋ 영수증</b>을 누르거나, 사진을 이 창에 <b>붙여넣기(Ctrl+V)</b>·<b>끌어놓기</b> 하세요.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <button class="fab" id="fab" aria-label="영수증 추가">＋</button>
+
+  <input id="file-camera" type="file" accept="image/*" capture="environment" hidden />
+  <input id="file-pick" type="file" accept="image/*" multiple hidden />
+  <input id="file-photo" type="file" accept="image/*" hidden />
+  <input id="file-restore" type="file" accept=".json,application/json" hidden />
+
+  <div id="login" class="login">
+    <div class="login-card">
+      <img src="icons/icon.svg" alt="" width="72" height="72" />
+      <h2>YB-Receipt</h2>
+      <p>Google 계정으로 로그인하면<br />PC·휴대폰에서 같은 영수증 목록을 씁니다.</p>
+      <button id="btn-signin" class="btn-primary btn-signin">Google 계정으로 로그인</button>
+      <p id="login-msg" class="login-msg"></p>
+    </div>
+  </div>
+
+  <div id="pop" class="pop" hidden></div>
+  <div id="viewer" class="viewer" hidden><img id="viewer-img" alt="" /><button class="viewer-x" aria-label="닫기">✕</button></div>
+  <div id="drop" class="drop" hidden><p>여기에 놓으면 영수증으로 추가됩니다</p></div>
+  <div id="toast" class="toast" hidden></div>
+  <div id="print-root" class="print-root"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

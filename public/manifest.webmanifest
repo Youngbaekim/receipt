@@ -1,0 +1,36 @@
+{
+  "name": "YB-Receipt",
+  "short_name": "YB영수증",
+  "description": "YB 업무 영수증 증빙 관리",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16202B",
+  "theme_color": "#243E6B",
+  "lang": "ko",
+  "id": "./",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
