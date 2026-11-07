@@ -224,6 +224,7 @@ function renderDetail() {
 
 function setDow(d) {
   const el = $('#f-dow');
+  if (!el) return;
   const w = dow(d);
   el.textContent = w ? `(${w}요일)` : '';
   el.classList.toggle('sat', w === '토');
@@ -249,7 +250,20 @@ function select(id, { open = true } = {}) {
   editing = false;
   renderList();
   renderDetail();
-  if (open && id) $('#app').dataset.view = 'detail';
+  if (open && id) openDetail();
+}
+
+/* 휴대폰(좁은 화면): 목록 ↔ 상세 전환, 휴대폰 '뒤로' 단추로도 목록 복귀 */
+const narrow = () => window.matchMedia('(max-width: 860px)').matches;
+function openDetail() {
+  if ($('#app').dataset.view !== 'detail' && narrow()) history.pushState({ ybr: 'detail' }, '');
+  $('#app').dataset.view = 'detail';
+  $('.detail-wrap').scrollTop = 0;
+}
+function backToList() {
+  flushSave();
+  if (history.state?.ybr === 'detail') history.back(); // popstate에서 목록으로
+  else $('#app').dataset.view = 'list';
 }
 
 /* 입력 → 자동 저장 */
@@ -638,7 +652,10 @@ function bind() {
     renderAll();
   };
 
-  document.querySelectorAll('[data-go="list"]').forEach((b) => (b.onclick = () => { flushSave(); $('#app').dataset.view = 'list'; }));
+  document.querySelectorAll('[data-go="list"]').forEach((b) => (b.onclick = backToList));
+  window.addEventListener('popstate', () => {
+    if ($('#app').dataset.view === 'detail') { flushSave(); $('#app').dataset.view = 'list'; }
+  });
 
   $('#f-date').addEventListener('change', (e) => { queueSave({ date: e.target.value }); setDow(e.target.value); });
   $('#f-merchant').addEventListener('input', (e) => { queueSave({ merchant: e.target.value.trim() }); $('#detail-title').textContent = e.target.value || '영수증'; });

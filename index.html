@@ -56,7 +56,7 @@
     <!-- 2열: 상세 -->
     <main class="pane pane-detail" aria-label="영수증 상세">
       <header class="pane-head">
-        <button class="icon-btn only-narrow" data-go="list" aria-label="목록으로">‹</button>
+        <button class="btn-back only-narrow" data-go="list" aria-label="목록으로">‹ 목록</button>
         <h1 id="detail-title">영수증</h1>
         <span id="save-state" class="save-state"></span>
         <button class="icon-btn" id="btn-rotate" title="사진 오른쪽으로 90° 돌리기" disabled>↻</button>
@@ -80,7 +80,7 @@
           </div>
 
           <form class="fields" id="fields" autocomplete="off" onsubmit="return false">
-            <label class="field"><span>일자</span><input type="date" id="f-date" /></label>
+            <label class="field"><span>일자 <em id="f-dow" class="dow"></em></span><input type="date" id="f-date" /></label>
             <label class="field"><span>가맹점</span><input type="text" id="f-merchant" placeholder="상호" maxlength="60" /></label>
             <label class="field"><span>금액</span><span class="amount-in"><input type="text" id="f-amount" inputmode="numeric" placeholder="0" /><em>원</em></span></label>
             <div class="field"><span>정산 상태</span>

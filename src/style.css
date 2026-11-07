@@ -75,6 +75,8 @@ button:disabled { cursor: default; opacity: .4; }
 .danger-ghost { color: var(--danger); }
 .danger-ghost:hover { border-color: var(--danger); color: var(--danger); }
 @media (max-width: 400px) { .selbar { gap: 6px; padding: 6px 8px; } .selbar .btn-ghost { padding: 5px 8px; } }
+.btn-back { padding: 6px 10px 6px 4px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--accent); white-space: nowrap; flex: none; }
+.btn-back:hover { background: var(--accent-soft); }
 .icon-btn { width: 34px; height: 34px; border-radius: 8px; font-size: 18px; flex: none; }
 .icon-btn:not(:disabled):hover { background: var(--accent-soft); }
 .sel { padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--pane); font-size: 13px; }
@@ -218,6 +220,7 @@ body.signed-out .login { display: grid; }
   .app[data-view='detail'] .pane-list { display: none; }
   .app[data-view='list'] ~ .fab { display: block; }
   .only-narrow { display: inline-block; }
+  .pane-detail .pane-head h1 { font-size: 15px; }
   #btn-add { display: none; }
   .detail { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
   .photo { min-height: 200px; }
