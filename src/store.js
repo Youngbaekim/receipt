@@ -74,6 +74,18 @@ export function removeReceipt(id) {
   return Promise.all([deleteDoc(ref(id)), deleteDoc(imgRef(id))]).catch(report('삭제'));
 }
 
+/** 여러 건 삭제 (정보+사진) — 한 번에 최대 200건씩 묶어 처리 */
+export function removeMany(ids) {
+  if (DEMO) { ids.forEach((id) => { mem.recs.delete(id); mem.imgs.delete(id); }); memEmit(); return Promise.resolve(); }
+  const jobs = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const b = writeBatch(fs);
+    ids.slice(i, i + 200).forEach((id) => { b.delete(ref(id)); b.delete(imgRef(id)); });
+    jobs.push(b.commit());
+  }
+  return Promise.all(jobs).catch(report('일괄 삭제'));
+}
+
 export async function saveImage(id, blob) {
   if (DEMO) { mem.imgs.set(id, blob); return; }
   const buf = new Uint8Array(await blob.arrayBuffer());

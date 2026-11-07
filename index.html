@@ -35,12 +35,13 @@
         <label class="chk"><input type="checkbox" id="chk-all" /><span id="sel-count">0건 선택</span></label>
         <span class="grow"></span>
         <select id="sel-bulk" class="sel sel-sm" title="선택한 영수증의 정산 상태 바꾸기">
-          <option value="">상태 변경…</option>
+          <option value="">상태…</option>
           <option value="todo">→ 미제출</option>
           <option value="submitted">→ 제출</option>
           <option value="done">→ 정산완료</option>
         </select>
-        <button class="btn-ghost" id="btn-sel-clear">선택 해제</button>
+        <button class="btn-ghost danger-ghost" id="btn-sel-delete" title="선택한 영수증을 사진과 함께 삭제">🗑 삭제</button>
+        <button class="btn-ghost" id="btn-sel-clear" title="선택 해제" aria-label="선택 해제">✕</button>
       </div>
 
       <ul id="list" class="list"></ul>

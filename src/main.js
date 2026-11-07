@@ -138,7 +138,7 @@ function renderList() {
 function renderSelbar() {
   const n = state.checked.size;
   $('#selbar').hidden = n === 0;
-  $('#sel-count').textContent = `${n}건 선택`;
+  $('#sel-count').textContent = `${n}건`;
   const vis = visible();
   const all = vis.length > 0 && vis.every((r) => state.checked.has(r.id));
   $('#chk-all').checked = all;
@@ -594,6 +594,20 @@ function bind() {
     renderSelbar();
   };
   $('#btn-sel-clear').onclick = () => { state.checked.clear(); renderList(); renderSelbar(); };
+  $('#btn-sel-delete').onclick = () => {
+    const ids = [...state.checked];
+    if (!ids.length) return;
+    const sel = state.list.filter((r) => state.checked.has(r.id));
+    const total = sel.reduce((t, r) => t + (Number(r.amount) || 0), 0);
+    if (!confirm(`선택한 영수증 ${ids.length}건(합계 ${won(total)}원)을 삭제할까요?\n사진도 함께 지워지며 되돌릴 수 없습니다.\n(필요하면 먼저 ⋯ 메뉴의 '전체 백업'을 받아 두세요)`)) return;
+    store.removeMany(ids);
+    ids.forEach((id) => store.forgetImage(id));
+    state.list = state.list.filter((r) => !state.checked.has(r.id));
+    if (state.checked.has(state.selId)) { state.selId = null; $('#app').dataset.view = 'list'; }
+    state.checked.clear();
+    renderAll();
+    toast(`${ids.length}건을 삭제했습니다.`);
+  };
   $('#sel-bulk').onchange = async (e) => {
     const v = e.target.value;
     e.target.value = '';
