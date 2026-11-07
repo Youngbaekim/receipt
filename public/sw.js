@@ -1,6 +1,6 @@
 // YB-Receipt 서비스 워커 — 인터넷이 없어도 앱 화면이 열리도록 파일을 기기에 보관
 // 영수증 데이터는 Firestore가 따로 기기에 보관하므로 여기서는 다루지 않음
-const VERSION = 'v0.1.1';
+const VERSION = 'v0.1.2';
 const SHELL = `ybr-shell-${VERSION}`;
 const EXT = 'ybr-ext-v1'; // 글꼴(외부 파일)
 const SCOPE = self.registration.scope; // https://…/yb-receipt/

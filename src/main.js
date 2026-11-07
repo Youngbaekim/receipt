@@ -15,6 +15,13 @@ const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+/** '2026-11-07' → '토' */
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+const dow = (d) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
+  return m ? DOW[new Date(+m[1], +m[2] - 1, +m[3]).getDay()] : '';
+};
+const dateLabel = (d) => `${d.replace(/-/g, '.')} (${dow(d)})`;
 const pref = {
   get: (k, d) => { try { return localStorage.getItem('ybr-' + k) ?? d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem('ybr-' + k, v); } catch { /* 무시 */ } },
@@ -96,7 +103,7 @@ function cardHTML(r) {
     <span class="thumb" ${thumb}>${r.thumb ? '' : '🧾'}</span>
     <span class="c-main">
       <span class="c-merchant${r.merchant ? '' : ' none'}">${esc(r.merchant || (o ? '인식 중…' : '가맹점 미입력'))}</span>
-      <span class="c-sub">${r.date ? `<span>${r.date.replace(/-/g, '.')}</span>` : '<span class="warn">일자 없음</span>'}</span>${r.memo ? `<span class="c-memo">${esc(r.memo)}</span>` : ''}
+      <span class="c-sub">${r.date ? `<span class="${{ 토: 'sat', 일: 'sun' }[dow(r.date)] || ''}">${dateLabel(r.date)}</span>` : '<span class="warn">일자 없음</span>'}</span>${r.memo ? `<span class="c-memo">${esc(r.memo)}</span>` : ''}
     </span>
     <span class="c-right"><span class="c-amount${r.amount ? '' : ' warn'}">${r.amount ? won(r.amount) + '원' : '금액 없음'}</span>${badge}</span>
   </li>`;
@@ -176,6 +183,9 @@ function renderDetail() {
   $('#detail-title').textContent = r.merchant || '영수증';
   if (fresh || !editing) {
     setVal('#f-date', r.date || '');
+  }
+  setDow(r.date);
+  if (fresh || !editing) {
     setVal('#f-merchant', r.merchant || '');
     setVal('#f-amount', r.amount ? won(r.amount) : '');
     setVal('#f-memo', r.memo || '');
@@ -210,6 +220,14 @@ function renderDetail() {
   }
   renderOcrOverlay();
   shownId = r.id;
+}
+
+function setDow(d) {
+  const el = $('#f-dow');
+  const w = dow(d);
+  el.textContent = w ? `(${w}요일)` : '';
+  el.classList.toggle('sat', w === '토');
+  el.classList.toggle('sun', w === '일');
 }
 
 function setVal(sel, v) {
@@ -622,7 +640,7 @@ function bind() {
 
   document.querySelectorAll('[data-go="list"]').forEach((b) => (b.onclick = () => { flushSave(); $('#app').dataset.view = 'list'; }));
 
-  $('#f-date').addEventListener('change', (e) => queueSave({ date: e.target.value }));
+  $('#f-date').addEventListener('change', (e) => { queueSave({ date: e.target.value }); setDow(e.target.value); });
   $('#f-merchant').addEventListener('input', (e) => { queueSave({ merchant: e.target.value.trim() }); $('#detail-title').textContent = e.target.value || '영수증'; });
   $('#f-amount').addEventListener('input', (e) => {
     const el = e.target;

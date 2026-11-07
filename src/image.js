@@ -1,6 +1,6 @@
 // 영수증 사진 처리 — 보관용 압축 · 목록용 미리보기 · 글자 인식용 보정
-const MAX_SIDE = 1800;          // 보관용 긴 변
-const MAX_BYTES = 650 * 1024;   // Firestore 문서 한도(1MB) 안에 들도록
+const MAX_SIDE = 1280;          // 보관용 긴 변
+const MAX_BYTES = 200 * 1024;   // 보관용 최대 용량 (글자 인식은 원본으로 먼저 하므로 영향 적음)
 const QUALITIES = [0.82, 0.72, 0.62, 0.52, 0.42];
 
 const toBlob = (canvas, type, q) => new Promise((r) => canvas.toBlob(r, type, q));
@@ -32,7 +32,7 @@ function drawTo(src, w, h, filter = '') {
   return c;
 }
 
-/** 보관용: JPEG, 긴 변 1,800px, 650KB 이하 */
+/** 보관용: JPEG, 긴 변 1,280px, 200KB 이하 */
 export async function compressImage(src) {
   let scale = Math.min(1, MAX_SIDE / Math.max(src.width, src.height));
   let blob;
