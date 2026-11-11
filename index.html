@@ -59,7 +59,7 @@
         <button class="btn-back only-narrow" data-go="list" aria-label="목록으로">‹ 목록</button>
         <h1 id="detail-title">영수증</h1>
         <span id="save-state" class="save-state"></span>
-        <button class="icon-btn" id="btn-rotate" title="사진 오른쪽으로 90° 돌리기" disabled>↻</button>
+        <button class="icon-btn" id="btn-crop" title="사진 자르기·돌리기 (네 모퉁이 맞춤)" disabled>✂</button>
         <button class="icon-btn" id="btn-reocr" title="글자 다시 인식 (일자·가맹점·금액을 새로 채움)" disabled>🔍</button>
         <button class="icon-btn" id="btn-photo" title="사진 넣기·바꾸기" disabled>📷</button>
         <button class="icon-btn" id="btn-delete" title="영수증 삭제" disabled>🗑</button>
@@ -82,7 +82,7 @@
           <form class="fields" id="fields" autocomplete="off" onsubmit="return false">
             <label class="field"><span>일자 <em id="f-dow" class="dow"></em></span><input type="date" id="f-date" /></label>
             <label class="field"><span>가맹점</span><input type="text" id="f-merchant" placeholder="상호" maxlength="60" /></label>
-            <label class="field"><span>금액</span><span class="amount-in"><input type="text" id="f-amount" inputmode="numeric" placeholder="0" /><em>원</em></span></label>
+            <label class="field"><span>금액 <em id="f-check" class="chk-ok" title="영수증의 공급가액(판매금액)+부가세와 금액이 맞음" hidden>✓ 검산 일치</em></span><span class="amount-in"><input type="text" id="f-amount" inputmode="numeric" placeholder="0" /><em>원</em></span></label>
             <div class="field"><span>정산 상태</span>
               <div class="seg" id="f-status" role="radiogroup">
                 <button type="button" data-v="todo" role="radio">미제출</button>

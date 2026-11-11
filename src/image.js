@@ -69,10 +69,10 @@ export function rotateCanvas(src, deg) {
 }
 
 /** 글자 인식용: 흑백 + 대비 강화, 작은 사진은 키우고 큰 사진은 줄임 (긴 변 약 2,000px) */
-export function prepForOcr(src) {
+export function prepForOcr(src, target = 2000, sx = 1) {
   const long = Math.max(src.width, src.height);
-  const s = Math.min(2.5, 2000 / long);
-  const w = Math.round(src.width * s);
+  const s = Math.min(3, target / long);
+  const w = Math.round(src.width * s * sx); // sx<1: 가로를 좁힘 (넓은 금액 글씨용)
   const h = Math.round(src.height * s);
   const c = drawTo(src, w, h, 'grayscale(1) contrast(1.35)');
   // ctx.filter를 지원하지 않는 브라우저(일부 Safari)는 직접 흑백 변환

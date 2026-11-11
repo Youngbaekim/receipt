@@ -5,6 +5,7 @@ import { signIn, signOutUser, watchAuth, finishRedirect } from './firebase.js';
 import * as store from './store.js';
 import { loadBitmap, compressImage, makeThumb, dataURLToBlob, rotateCanvas } from './image.js';
 import { recognize } from './ocr.js';
+import { openCropper } from './crop.js';
 import { STATUS, exportExcel, exportBackup, printEvidence } from './export.js';
 
 const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -172,7 +173,7 @@ function renderDetail() {
   $('#empty-detail').hidden = has;
   ['#btn-delete', '#btn-photo'].forEach((s) => ($(s).disabled = !has));
   $('#btn-reocr').disabled = !has || !r?.hasImage || state.ocr.has(r?.id);
-  $('#btn-rotate').disabled = $('#btn-reocr').disabled;
+  $('#btn-crop').disabled = $('#btn-reocr').disabled;
   if (!has) {
     shownId = null;
     $('#detail-title').textContent = '영수증';
@@ -192,6 +193,7 @@ function renderDetail() {
   }
   $('#f-date').classList.toggle('missing', !r.date && !state.ocr.has(r.id));
   $('#f-amount').classList.toggle('missing', !r.amount && !state.ocr.has(r.id));
+  $('#f-check').hidden = !(r.amount && r.amountChecked);
   document.querySelectorAll('#f-status button').forEach((b) => {
     b.classList.toggle('on', b.dataset.v === r.status);
     b.setAttribute('aria-checked', b.dataset.v === r.status);
@@ -304,9 +306,15 @@ async function addFiles(files) {
   if (!imgs.length) return;
   if (!state.user) return toast('먼저 로그인해 주세요.');
   let firstId = null;
-  for (const file of imgs) {
+  let added = 0;
+  for (const [k, file] of imgs.entries()) {
     try {
-      const bitmap = await loadBitmap(file);
+      const raw = await loadBitmap(file);
+      // 자르기 화면: 네 모퉁이를 영수증에 맞춤 (취소하면 이 사진은 추가하지 않음)
+      const bitmap = await openCropper(raw, { index: k + 1, total: imgs.length });
+      if (!bitmap) { if (raw.close) raw.close(); continue; }
+      if (bitmap !== raw && raw.close) raw.close();
+      added++;
       const id = store.newId();
       const blob = await compressImage(bitmap);
       const now = Date.now();
@@ -322,7 +330,7 @@ async function addFiles(files) {
       toast(`사진을 읽지 못했습니다: ${file.name || ''}`);
     }
   }
-  if (imgs.length > 1) toast(`${imgs.length}장을 추가했습니다. 차례로 글자를 인식합니다.`);
+  if (added > 1) toast(`${added}장을 추가했습니다. 차례로 글자를 인식합니다.`);
   renderAll();
 }
 
@@ -369,6 +377,7 @@ async function runOcr(id, bitmap, overwrite) {
     for (const k of ['date', 'merchant', 'amount']) {
       if (res[k] && (overwrite || !r[k])) fields[k] = res[k];
     }
+    if ('amount' in fields) fields.amountChecked = !!res.verified; // 공급가액+부가세 검산 일치 여부
     Object.assign(r, fields);
     store.patchReceipt(id, fields);
     const miss = ['date', 'merchant', 'amount'].filter((k) => !r[k]).map((k) => ({ date: '일자', merchant: '가맹점', amount: '금액' }[k]));
@@ -410,7 +419,8 @@ async function reOcr() {
 async function replacePhoto(file) {
   const r = current();
   if (!r || !file) return;
-  const bitmap = await loadBitmap(file);
+  const bitmap = await openCropper(await loadBitmap(file));
+  if (!bitmap) return;
   const blob = await compressImage(bitmap);
   store.forgetImage(r.id);
   store.saveImage(r.id, blob);
@@ -422,20 +432,23 @@ async function replacePhoto(file) {
   runOcr(r.id, bitmap, false);
 }
 
-/** 사진 오른쪽으로 90° 돌리기 (돌린 뒤 🔍로 다시 인식 가능) */
-async function rotatePhoto() {
+/** 이미 저장한 사진 다시 자르기·돌리기 (끝나면 빈 칸만 다시 인식) */
+async function cropPhoto() {
   const r = current();
   if (!r?.hasImage) return;
   const blob = await store.loadImageBlob(r.id);
-  if (!blob) return;
-  const up = rotateCanvas(await loadBitmap(blob), 90);
+  if (!blob) return toast('사진을 불러오지 못했습니다.');
+  const src = await loadBitmap(blob);
+  const out = await openCropper(src);
+  if (!out || out === src) return;
   store.forgetImage(r.id);
-  store.saveImage(r.id, await compressImage(up));
-  const fields = { thumb: makeThumb(up) };
+  store.saveImage(r.id, await compressImage(out));
+  const fields = { thumb: makeThumb(out) };
   Object.assign(r, fields);
   store.patchReceipt(r.id, fields);
   shownId = null;
   renderAll();
+  runOcr(r.id, out, false);
 }
 
 async function removeCurrent() {
@@ -668,7 +681,7 @@ function bind() {
     let pos = 0;
     for (let seen = 0; pos < el.value.length && seen < digitsBefore; pos++) if (/\d/.test(el.value[pos])) seen++;
     el.setSelectionRange(pos, pos);
-    queueSave({ amount: n });
+    queueSave({ amount: n, amountChecked: false });
   });
   $('#f-memo').addEventListener('input', (e) => queueSave({ memo: e.target.value }));
   ['#f-date', '#f-merchant', '#f-amount', '#f-memo'].forEach((s) => $(s).addEventListener('blur', () => flushSave()));
@@ -682,7 +695,7 @@ function bind() {
 
   $('#btn-delete').onclick = removeCurrent;
   $('#btn-reocr').onclick = reOcr;
-  $('#btn-rotate').onclick = rotatePhoto;
+  $('#btn-crop').onclick = cropPhoto;
   $('#btn-photo').onclick = () => $('#file-photo').click();
   $('#btn-photo2').onclick = () => $('#file-photo').click();
 
