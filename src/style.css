@@ -301,3 +301,7 @@ body.cropping { overflow: hidden; }
 .mn-msg.err { color: var(--danger); }
 .mn-foot .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 .mn-foot .btn-primary, .mn-foot .btn-ghost { padding: 10px 16px; font-size: 14px; }
+.mn-gen { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mn-gen .btn-ghost { padding: 9px 14px; font-size: 14px; font-weight: 600; color: var(--accent); border-color: var(--accent); }
+.mn-gen .btn-ghost:disabled { opacity: .5; }
+.mn-gen .mn-meta { flex: 1 1 240px; }

@@ -240,7 +240,9 @@ export function openMinutes({ list, selId }) {
     </section>
 
     <section class="mn-sec">
-      <h2>안건 및 회의결과 <a class="mn-link" href="${DRAFT_URL}" target="_blank" rel="noopener">Claude 생성기에서 초안 만들기 ↗</a></h2>
+      <h2>안건 및 회의결과 <a class="mn-link" href="${DRAFT_URL}" target="_blank" rel="noopener">Claude 생성기 열기 ↗</a></h2>
+      <label class="field"><span>실제 논의한 요지 (키워드 3~5개 이상)</span><textarea id="mn-gist" rows="4" placeholder="예) 성과지표 관리 기준이 부서마다 달라 일원화 필요&#10;참여 인원 외 만족도·후속 참여도 지표 추가&#10;성과관리팀이 제출 양식 마련, 학생서비스팀이 간담회 지원"></textarea></label>
+      <div class="mn-gen"><button class="btn-ghost" id="mn-gen">✨ 초안 만들기</button><span class="mn-meta">적은 요지만 풀어 씁니다. 요지에 없는 역할 분담·후속 조치에는 [확인 필요]가 붙습니다.</span></div>
       <textarea id="mn-body" class="mn-body" rows="18" placeholder="${esc(SKELETON)}"></textarea>
       <p class="mn-meta"><span id="mn-lines">본문 0줄</span> · <span id="mn-chk">확인 필요 0건</span></p>
       <label class="chk mn-agree"><input type="checkbox" id="mn-agree" /><span>회의 일시와 본문이 실제 회의와 일치함을 확인했습니다.</span></label>
@@ -312,6 +314,30 @@ export function openMinutes({ list, selId }) {
   q('#mn-t2').addEventListener('input', () => { timeTouched = true; });
   root.addEventListener('input', refresh);
   root.addEventListener('change', refresh);
+
+  q('#mn-gen').onclick = async () => {
+    const d = collect();
+    const gist = q('#mn-gist').value.trim();
+    if (!d.topic) return msg('회의 주제를 먼저 적어 주세요.', true);
+    if (gist.length < 10) return msg('실제 논의한 요지를 조금 더 적어 주세요. 주제만으로는 초안을 만들지 않습니다.', true);
+    if (q('#mn-body').value.trim() && !confirm('지금 본문을 새 초안으로 바꿀까요?')) return;
+    const btn = q('#mn-gen');
+    btn.disabled = true;
+    msg('초안을 만드는 중…');
+    try {
+      const { draftMinutes } = await import('./ai.js');
+      const depts = [...new Set(d.att.map((a) => a.dept).filter(Boolean))];
+      q('#mn-body').value = await draftMinutes({ topic: d.topic, depts, gist });
+      q('#mn-agree').checked = false;
+      msg('초안이 나왔습니다. 읽고 실제와 다른 줄은 고쳐 주세요.');
+    } catch (e) {
+      console.error(e);
+      msg(`초안을 만들지 못했습니다. Firebase 콘솔의 AI Logic 설정을 확인해 주세요. (${String(e.message || e).slice(0, 160)})`, true);
+    } finally {
+      btn.disabled = false;
+      refresh();
+    }
+  };
 
   q('#mn-save').onclick = async () => {
     const d = collect();
