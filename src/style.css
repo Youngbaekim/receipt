@@ -296,6 +296,9 @@ body.cropping { overflow: hidden; }
 .mn-meta { margin: 0; font-size: 12.5px; color: var(--soft); }
 .mn-meta .bad { color: var(--danger); font-weight: 700; }
 .mn-agree { align-items: flex-start; font-size: 14px; white-space: normal; flex: initial; }
+.mn-dir { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 13px; color: var(--soft); }
+.mn-dir span { flex: 1 1 200px; overflow-wrap: anywhere; }
+.mn-dir .btn-ghost { padding: 6px 12px; font-size: 13px; }
 .mn-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .mn-msg { flex: 1 1 220px; margin: 0; font-size: 13px; color: var(--soft); overflow-wrap: anywhere; }
 .mn-msg.err { color: var(--danger); }

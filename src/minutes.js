@@ -1,6 +1,7 @@
 // 회의록 만들기 — 올려 둔 영수증을 골라 혁신사업 지출결의 양식(회의록·서명부·영수증 붙임, HWPX)을 채워 저장
 // 양식 틀은 public/minutes 에 있고, 압축은 브라우저 기본 기능(CompressionStream)으로 처리
 import { loadImageBlob } from './store.js';
+import { canPickDir, canPickFile, getDir, pickDir, forgetDir, allowDir, saveToDir, askFile, writeFile } from './savedir.js';
 
 const BASE = `${import.meta.env.BASE_URL}minutes/`;
 const DRAFT_URL = 'https://claude.ai/artifact/JznaLYCjLERJUzYPnehGFo'; // 본문 초안을 만드는 Claude 회의록 생성기
@@ -248,6 +249,8 @@ export function openMinutes({ list, selId }) {
       <label class="chk mn-agree"><input type="checkbox" id="mn-agree" /><span>회의 일시와 본문이 실제 회의와 일치함을 확인했습니다.</span></label>
     </section>
 
+    <p class="mn-dir" id="mn-dir" hidden><span>저장 위치: <b id="mn-dirname"></b></span><button class="btn-ghost" id="mn-dirpick">폴더 지정</button><button class="btn-ghost" id="mn-dirask" hidden>매번 묻기</button></p>
+
     <footer class="mn-foot">
       <p class="mn-msg" id="mn-msg" role="status"></p>
       <button class="btn-ghost" id="mn-close">닫기</button>
@@ -342,12 +345,48 @@ export function openMinutes({ list, selId }) {
     }
   };
 
+  // 저장 위치: 폴더를 지정해 두면 묻지 않고 그 폴더에 바로 저장, 아니면 저장할 때마다 위치를 물음
+  let dir = null;
+  const showDir = () => {
+    q('#mn-dirname').textContent = dir ? `'${dir.name}' 폴더에 바로 저장` : '저장할 때마다 위치 묻기';
+    q('#mn-dirpick').textContent = dir ? '폴더 바꾸기' : '폴더 지정';
+    q('#mn-dirask').hidden = !dir;
+  };
+  if (canPickDir()) {
+    q('#mn-dir').hidden = false;
+    showDir();
+    getDir().then((h) => { dir = h; showDir(); });
+  }
+  q('#mn-dirpick').onclick = async () => {
+    try {
+      dir = await pickDir();
+      showDir();
+      msg(`앞으로 '${dir.name}' 폴더에 바로 저장합니다.`);
+    } catch (e) {
+      if (e.name !== 'AbortError') msg(`폴더를 지정하지 못했습니다: ${e.message || e}`, true);
+    }
+  };
+  q('#mn-dirask').onclick = async () => {
+    await forgetDir();
+    dir = null;
+    showDir();
+    msg('앞으로 저장할 때마다 위치를 묻습니다.');
+  };
+
   q('#mn-save').onclick = async () => {
     const d = collect();
     if (d.att.length > MAX_ATT) return msg(`서명부는 ${MAX_ATT}명까지 들어갑니다.`, true);
+    const name = `YB_C_회의록_${d.date.replace(/\(.*?\)/, '').replace(/\.$/, '')}_${d.topic.replace(/[\\/:*?"<>|]/g, ' ').trim()}.hwpx`;
     q('#mn-save').disabled = true;
-    msg('양식에 채우는 중…');
+    let target = null; // 위치를 물어 받은 파일
     try {
+      // 권한 확인과 위치 묻기는 단추를 누른 직후에만 창이 뜨므로 양식을 채우기 전에 먼저 함
+      if (dir) {
+        if (!(await allowDir(dir))) throw new Error(`'${dir.name}' 폴더에 쓰는 것이 허용되지 않았습니다.`);
+      } else if (canPickFile()) {
+        target = await askFile(name);
+      }
+      msg('양식에 채우는 중…');
       const r = receipt();
       d.img = null;
       if (r?.hasImage) {
@@ -356,12 +395,22 @@ export function openMinutes({ list, selId }) {
         d.img = await prepImage(blob);
       }
       const blob = await buildHwpx(d);
-      const name = `YB_C_회의록_${d.date.replace(/\(.*?\)/, '').replace(/\.$/, '')}_${d.topic.replace(/[\\/:*?"<>|]/g, ' ').trim()}.hwpx`;
-      download(blob, name);
-      msg(`저장했습니다: ${name}`);
+      if (dir) {
+        msg(`'${dir.name}' 폴더에 저장했습니다: ${await saveToDir(dir, name, blob)}`);
+      } else if (target) {
+        msg(`저장했습니다: ${await writeFile(target, blob)}`);
+        target = null;
+      } else {
+        download(blob, name);
+        msg(`저장했습니다: ${name}`);
+      }
     } catch (e) {
+      if (target) target.remove?.().catch(() => {}); // 위치만 정하고 못 쓴 빈 파일 정리
+      if (e.name === 'AbortError') { msg('저장을 취소했습니다.'); return; }
       console.error(e);
-      msg(`저장하지 못했습니다: ${e.message || e}`, true);
+      msg(e.name === 'NotFoundError'
+        ? '저장하지 못했습니다: 지정한 폴더를 찾을 수 없습니다. [폴더 바꾸기]로 다시 지정해 주세요.'
+        : `저장하지 못했습니다: ${e.message || e}`, true);
     } finally {
       refresh();
     }
