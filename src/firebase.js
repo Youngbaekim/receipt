@@ -5,9 +5,16 @@ import {
   onAuthStateChanged, signOut,
 } from 'firebase/auth';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
-import { firebaseConfig } from './firebase-config.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, ReCaptchaV3Provider } from 'firebase/app-check';
+import { firebaseConfig, appCheck } from './firebase-config.js';
 
 export const app = initializeApp(firebaseConfig, 'yb-receipt');
+// App Check: 사이트 키가 있을 때만 켬 (개발 서버에서는 끔 — reCAPTCHA 가 localhost 를 허용하지 않을 수 있음)
+if (appCheck.siteKey && !import.meta.env.DEV) {
+  const Provider = appCheck.provider === 'v3' ? ReCaptchaV3Provider : ReCaptchaEnterpriseProvider;
+  initializeAppCheck(app, { provider: new Provider(appCheck.siteKey), isTokenAutoRefreshEnabled: true });
+}
+
 export const auth = getAuth(app);
 auth.languageCode = 'ko';
 

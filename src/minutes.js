@@ -332,7 +332,10 @@ export function openMinutes({ list, selId }) {
       msg('초안이 나왔습니다. 읽고 실제와 다른 줄은 고쳐 주세요.');
     } catch (e) {
       console.error(e);
-      msg(`초안을 만들지 못했습니다. Firebase 콘솔의 AI Logic 설정을 확인해 주세요. (${String(e.message || e).slice(0, 160)})`, true);
+      const m = String(e.message || e);
+      msg(/App Check/i.test(m)
+        ? '초안을 만들지 못했습니다. Firebase App Check 설정이 필요합니다 (콘솔 → App Check).'
+        : `초안을 만들지 못했습니다. Firebase 콘솔의 AI Logic 설정을 확인해 주세요. (${m.slice(-200)})`, true);
     } finally {
       btn.disabled = false;
       refresh();
