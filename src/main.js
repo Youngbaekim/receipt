@@ -6,7 +6,8 @@ import * as store from './store.js';
 import { loadBitmap, compressImage, makeThumb, dataURLToBlob, rotateCanvas } from './image.js';
 import { recognize } from './ocr.js';
 import { openCropper } from './crop.js';
-import { STATUS, exportExcel, exportBackup, printEvidence, exportForMinutes } from './export.js';
+import { STATUS, exportExcel, exportBackup, printEvidence } from './export.js';
+import { openMinutes } from './minutes.js';
 
 const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
 const $ = (s, el = document) => el.querySelector(s);
@@ -451,22 +452,10 @@ async function cropPhoto() {
   runOcr(r.id, out, false);
 }
 
-/** 회의록 생성기로 보내기 (지금 보고 있는 영수증 1건) */
+/** 회의록 만들기 — 지금 보고 있는 영수증을 먼저 골라 둔 채로 열기 (다른 영수증으로 바꿀 수 있음) */
 async function sendToMinutes() {
-  if (!current()) return;
   await flushSave();
-  const r = current();
-  if (!r) return;
-  if (!r.amount || !r.date) return toast('일자와 금액을 먼저 채워 주세요.');
-  try {
-    const { copied } = await exportForMinutes(r);
-    toast(copied
-      ? '복사하고 파일로도 저장했습니다. 회의록 생성기의 영수증 칸에 붙여넣으세요 (Ctrl+V).'
-      : '파일로 저장했습니다. 회의록 생성기에서 이 파일을 선택하세요.', 6000);
-  } catch (e) {
-    console.error(e);
-    toast(`보내지 못했습니다: ${e.message || e}`);
-  }
+  openMinutes({ list: state.list, selId: state.selId });
 }
 
 async function removeCurrent() {
@@ -525,6 +514,7 @@ function mainMenu(anchor) {
   openPop(anchor, `
     <button data-a="excel">📊 엑셀로 내보내기 <span class="k">${t.list.length}건</span></button>
     <button data-a="print">🖨 증빙 인쇄·PDF <span class="k">${t.list.length}건</span></button>
+    <button data-a="minutes">📝 회의록 만들기 <span class="k">영수증 선택</span></button>
     <hr />
     <button data-a="backup">💾 전체 백업 <span class="k">${state.list.length}건</span></button>
     <button data-a="restore">♻ 백업에서 복원</button>
@@ -545,6 +535,7 @@ async function doAction(a) {
   if (a === 'pick') return $('#file-pick').click();
   if (a === 'manual') return addManual();
   if (a === 'restore') return $('#file-restore').click();
+  if (a === 'minutes') return sendToMinutes();
   if (a === 'signout') {
     if (confirm('로그아웃할까요? 다시 로그인하면 영수증이 그대로 보입니다.')) await signOutUser();
     return;

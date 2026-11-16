@@ -274,3 +274,30 @@ body.cropping { overflow: hidden; }
   .pp-cap { font-size: 9.5pt; margin-bottom: 2mm; }
   .pp-img img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
 }
+
+/* ───────── 회의록 만들기 ───────── */
+.mn { position: fixed; inset: 0; z-index: 80; overflow: auto; background: var(--bg); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.mn-in { max-width: 720px; margin: 0 auto; padding: 14px 16px 28px; display: flex; flex-direction: column; gap: 14px; }
+.mn-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mn-head h1 { font-size: 19px; margin: 0; }
+.mn-sec { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--pane); }
+.mn-sec h2 { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; font-size: 14px; color: var(--accent); }
+.mn-link { font-size: 12.5px; font-weight: 500; color: var(--accent); }
+.mn-wide { width: 100%; max-width: none; }
+.mn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mn-rc { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.55; }
+.mn-rc img { width: 72px; max-height: 120px; object-fit: cover; border: 1px solid var(--line); border-radius: 6px; flex: none; }
+.mn-rc div { min-width: 0; overflow-wrap: anywhere; }
+.mn-memo { color: var(--soft); font-size: 13px; }
+.mn-pay { font-style: normal; font-weight: 500; color: var(--st-sub); margin-left: 6px; }
+.mn-warn { margin: 0; padding: 7px 10px; border-radius: 8px; font-size: 13px; background: var(--st-todo-bg); color: var(--st-todo); }
+.mn-body { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--pane); font-size: 14px; line-height: 1.7; resize: vertical; outline: none; white-space: pre-wrap; }
+.mn-body:focus { border-color: var(--accent); }
+.mn-meta { margin: 0; font-size: 12.5px; color: var(--soft); }
+.mn-meta .bad { color: var(--danger); font-weight: 700; }
+.mn-agree { align-items: flex-start; font-size: 14px; white-space: normal; flex: initial; }
+.mn-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.mn-msg { flex: 1 1 220px; margin: 0; font-size: 13px; color: var(--soft); overflow-wrap: anywhere; }
+.mn-msg.err { color: var(--danger); }
+.mn-foot .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+.mn-foot .btn-primary, .mn-foot .btn-ghost { padding: 10px 16px; font-size: 14px; }

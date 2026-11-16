@@ -67,28 +67,6 @@ export async function exportBackup(list, onStep) {
   download(blob, `YB-Receipt_백업_${stamp()}.json`);
 }
 
-/**
- * 회의록 생성기로 보내기: 영수증 1건(일자·가맹점·금액·메모·사진)을 클립보드에 복사하고 파일로도 저장
- * - 회의록 생성기 웹페이지: 영수증 칸에 붙여넣기(Ctrl+V)
- * - Claude 회의록 스킬: 저장된 파일(YB-Receipt_회의록용_….json)을 읽음
- * @returns {Promise<{copied:boolean, name:string}>}
- */
-export async function exportForMinutes(r) {
-  let image = null;
-  if (r.hasImage) {
-    const b = await loadImageBlob(r.id).catch(() => null);
-    if (b) image = await blobToDataURL(b);
-  }
-  const item = { id: r.id, date: r.date || '', merchant: r.merchant || '', amount: Number(r.amount) || 0, memo: r.memo || '', image };
-  const text = JSON.stringify({ app: 'YB-Receipt', kind: 'minutes', version: 1, exportedAt: new Date().toISOString(), items: [item] });
-  let copied = false;
-  try { await navigator.clipboard.writeText(text); copied = true; } catch { /* 복사가 막힌 환경에서는 파일만 저장 */ }
-  const safe = (item.merchant || '영수증').replace(/[\\/:*?"<>|]/g, ' ').trim().slice(0, 30);
-  const name = `YB-Receipt_회의록용_${item.date || stamp()}_${safe}.json`;
-  download(new Blob([text], { type: 'application/json' }), name);
-  return { copied, name };
-}
-
 /** 증빙 인쇄: 1쪽 목록표, 이어서 영수증 사진 (A4 세로, 한 쪽에 2장) */
 export async function printEvidence(list, label) {
   const root = document.getElementById('print-root');
