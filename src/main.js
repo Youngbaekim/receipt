@@ -6,7 +6,7 @@ import * as store from './store.js';
 import { loadBitmap, compressImage, makeThumb, dataURLToBlob, rotateCanvas } from './image.js';
 import { recognize } from './ocr.js';
 import { openCropper } from './crop.js';
-import { STATUS, exportExcel, exportBackup, printEvidence } from './export.js';
+import { STATUS, exportExcel, exportBackup, printEvidence, exportForMinutes } from './export.js';
 
 const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
 const $ = (s, el = document) => el.querySelector(s);
@@ -171,7 +171,7 @@ function renderDetail() {
   const has = !!r;
   $('#detail').hidden = !has;
   $('#empty-detail').hidden = has;
-  ['#btn-delete', '#btn-photo'].forEach((s) => ($(s).disabled = !has));
+  ['#btn-delete', '#btn-photo', '#btn-minutes'].forEach((s) => ($(s).disabled = !has));
   $('#btn-reocr').disabled = !has || !r?.hasImage || state.ocr.has(r?.id);
   $('#btn-crop').disabled = $('#btn-reocr').disabled;
   if (!has) {
@@ -451,6 +451,24 @@ async function cropPhoto() {
   runOcr(r.id, out, false);
 }
 
+/** 회의록 생성기로 보내기 (지금 보고 있는 영수증 1건) */
+async function sendToMinutes() {
+  if (!current()) return;
+  await flushSave();
+  const r = current();
+  if (!r) return;
+  if (!r.amount || !r.date) return toast('일자와 금액을 먼저 채워 주세요.');
+  try {
+    const { copied } = await exportForMinutes(r);
+    toast(copied
+      ? '복사하고 파일로도 저장했습니다. 회의록 생성기의 영수증 칸에 붙여넣으세요 (Ctrl+V).'
+      : '파일로 저장했습니다. 회의록 생성기에서 이 파일을 선택하세요.', 6000);
+  } catch (e) {
+    console.error(e);
+    toast(`보내지 못했습니다: ${e.message || e}`);
+  }
+}
+
 async function removeCurrent() {
   const r = current();
   if (!r) return;
@@ -694,6 +712,7 @@ function bind() {
   };
 
   $('#btn-delete').onclick = removeCurrent;
+  $('#btn-minutes').onclick = sendToMinutes;
   $('#btn-reocr').onclick = reOcr;
   $('#btn-crop').onclick = cropPhoto;
   $('#btn-photo').onclick = () => $('#file-photo').click();
